@@ -151,6 +151,24 @@ fn parse_requests(tokens: Vec<HttpToken>) -> Vec<HttpRequest> {
     request
 }
 
+fn send_request(req: &HttpRequest) {
+    let client = reqwest::blocking::Client::new();
+
+    let builder = match req.method {
+        HttpMethod::Get => client.get(&req.url),
+        HttpMethod::Post => client.post(&req.url),
+        HttpMethod::Put => client.put(&req.url),
+        HttpMethod::Delete => client.delete(&req.url),
+    };
+
+    let response = builder.send().expect("Failed to send HTTP request");
+
+    println!("--- RESPONSE ---");
+    println!("Status: {}", response.status());
+    println!("Body:\n{}", response.text().unwrap_or_default());
+    println!("----------------\n");
+}
+
 fn main() {
     let mut my_headers = HashMap::new();
     my_headers.insert("Content-Type".to_string(), "application/json".to_string());
@@ -163,23 +181,18 @@ fn main() {
     println!("{:#?}", my_http_request);
 
     let raw_text = "
-    @base_url=http://127.0.0.1:8000
-    ###
-    GET {{base_url}}/ping
-    ###
-    POST {{base_url}}/todoitems
-    Content-Type: application/json
-    Authorization: Bearer my-token
-
-    {
-        \"name\": \"walk dog\",
-        \"isComplete\": false
-    }
-    ";
+   @base_url=https://httpbin.org
+   ###
+   GET {{base_url}}/get
+   ";
 
     let my_tokens = tokenize(raw_text.trim());
     println!("{:#?}", my_tokens);
 
     let parsed_request = parse_requests(my_tokens);
     println!("Parsed request:\n{:?}", parsed_request);
+
+    for req in &parsed_request {
+        send_request(req);
+    }
 }
