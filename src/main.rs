@@ -66,8 +66,21 @@ fn tokenize(content: &str) -> Vec<HttpToken> {
     tokens
 }
 
+fn inject_variable(text: &str, variables: &HashMap<String, String>) -> String {
+    let mut result = text.to_string();
+
+    for (key, value) in variables {
+        let target = format!("{{{{{}}}}}", key);
+
+        result = result.replace(&target, value);
+    }
+
+    result
+}
+
 fn parse_requests(tokens: Vec<HttpToken>) -> Vec<HttpRequest> {
     let mut current_method: Option<HttpMethod> = None;
+    let mut variable: HashMap<String, String> = HashMap::new();
     let mut current_url: Option<String> = None;
     let mut current_headers: HashMap<String, String> = HashMap::new();
     let mut current_body_lines: Vec<String> = Vec::new();
@@ -75,6 +88,9 @@ fn parse_requests(tokens: Vec<HttpToken>) -> Vec<HttpRequest> {
 
     for token in tokens {
         match token {
+            HttpToken::Variable(name, value) => {
+                variable.insert(name, value);
+            }
             HttpToken::RequestLine(method_str, url_str) => {
                 current_method = match method_str.as_str() {
                     "POST" => Some(HttpMethod::Post),
@@ -83,7 +99,8 @@ fn parse_requests(tokens: Vec<HttpToken>) -> Vec<HttpRequest> {
                     "DELETE" => Some(HttpMethod::Delete),
                     _ => None,
                 };
-                current_url = Some(url_str);
+                let injected_url = inject_variable(&url_str, &variable);
+                current_url = Some(injected_url);
             }
             HttpToken::Header(key, value) => {
                 current_headers.insert(key, value);
