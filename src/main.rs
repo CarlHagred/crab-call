@@ -82,7 +82,7 @@ fn inject_variable(text: &str, variables: &HashMap<String, String>) -> String {
 
 fn parse_requests(tokens: Vec<HttpToken>) -> Vec<HttpRequest> {
     let mut current_method: Option<HttpMethod> = None;
-    let mut variable: HashMap<String, String> = HashMap::new();
+    let mut variables: HashMap<String, String> = HashMap::new();
     let mut current_url: Option<String> = None;
     let mut current_headers: HashMap<String, String> = HashMap::new();
     let mut current_body_lines: Vec<String> = Vec::new();
@@ -91,7 +91,7 @@ fn parse_requests(tokens: Vec<HttpToken>) -> Vec<HttpRequest> {
     for token in tokens {
         match token {
             HttpToken::Variable(name, value) => {
-                variable.insert(name, value);
+                variables.insert(name, value);
             }
             HttpToken::RequestLine(method_str, url_str) => {
                 current_method = match method_str.as_str() {
@@ -101,14 +101,14 @@ fn parse_requests(tokens: Vec<HttpToken>) -> Vec<HttpRequest> {
                     "DELETE" => Some(HttpMethod::Delete),
                     _ => None,
                 };
-                let injected_url = inject_variable(&url_str, &variable);
+                let injected_url = inject_variable(&url_str, &variables);
                 current_url = Some(injected_url);
             }
             HttpToken::Header(key, value) => {
-                current_headers.insert(key, value);
+                current_headers.insert(key, inject_variable(&value, &variables));
             }
             HttpToken::Body(line) => {
-                current_body_lines.push(line);
+                current_body_lines.push(inject_variable(&line, &variables));
             }
             HttpToken::Separator => {
                 let final_body = current_body_lines.join("\n");
