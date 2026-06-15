@@ -2,27 +2,12 @@
 
 A Rust HTTP client that parses and executes `.http` files.
 
-## Overview
-
-Crab Call reads a `.http` file format tokenizes it, resolves variables,
-and executes the defined HTTP requests.
-
 ## Features
 
 - **HTTP methods** -- GET, POST, PUT, DELETE
 - **Variables** -- define with `@name=value`, interpolate with `{{name}}`
-- **Headers** -- standard `Key: Value` format
-- **Request bodies** -- separated from headers by a blank line
-- **Request separation** -- split multiple requests with `###`
-- **Comments** -- lines starting with `#`
 
-## Getting Started
-
-### Prerequisites
-
-- [Rust](https://rustup.rs/) (edition 2024)
-
-### Build and run
+## Build and run
 
 ```sh
 cargo build
@@ -52,16 +37,6 @@ Content-Type: application/json
 
 Each request is separated by `###`.
 Variables defined with `@` are available for interpolation in all subsequent requests.
-
-## Project Structure
-
-```
-crab_call/
-├── Cargo.toml     # Package manifest and dependencies
-├── LICENSE        # MIT license
-└── src/
-    └── main.rs    # Tokenizer, parser, and HTTP executor
-```
 
 ## License
 
